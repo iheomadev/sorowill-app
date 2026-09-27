@@ -310,18 +310,32 @@ export default function DashboardPage() {
 
   const invalidBatchWillIds = getInvalidBatchAmounts(selectedWillIds, batchAmounts);
 
+  const TAB_ORDER: Tab[] = ['owned', 'inheriting', 'guardianship'];
+
   const handleTabKeyDown = (event: React.KeyboardEvent<HTMLButtonElement>, tabName: Tab) => {
-    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+    const currentIndex = TAB_ORDER.indexOf(tabName);
+    let newTab: Tab | null = null;
+
+    if (event.key === 'ArrowRight') {
       event.preventDefault();
-      // Simple toggle navigation for keyboard accessibility
-      const newTab =
-        tabName === 'owned'
-          ? 'inheriting'
-          : tabName === 'inheriting'
-            ? 'guardianship'
-            : 'owned';
+      newTab = TAB_ORDER[(currentIndex + 1) % TAB_ORDER.length];
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      newTab = TAB_ORDER[(currentIndex - 1 + TAB_ORDER.length) % TAB_ORDER.length];
+    } else if (event.key === 'Home') {
+      event.preventDefault();
+      newTab = TAB_ORDER[0];
+    } else if (event.key === 'End') {
+      event.preventDefault();
+      newTab = TAB_ORDER[TAB_ORDER.length - 1];
+    }
+
+    if (newTab !== null) {
       setTab(newTab);
       setIsMultiSelectMode(false);
+      // Move focus to the newly selected tab
+      const tabEl = document.getElementById(`${newTab}-tab`);
+      tabEl?.focus();
     }
   };
   return (
@@ -409,6 +423,7 @@ export default function DashboardPage() {
       <div className="flex gap-1 rounded-full border border-white/10 bg-white/5 p-1" role="tablist">
         <button
           type="button"
+          id="owned-tab"
           onClick={() => {
             setTab('owned');
             setIsMultiSelectMode(false);
@@ -416,7 +431,8 @@ export default function DashboardPage() {
           onKeyDown={(e) => handleTabKeyDown(e, 'owned')}
           role="tab"
           aria-selected={tab === 'owned'}
-          aria-controls="tab-panel"
+          aria-controls="owned-panel"
+          tabIndex={tab === 'owned' ? 0 : -1}
           className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
             tab === 'owned'
               ? 'bg-will-purple text-white'
@@ -427,6 +443,7 @@ export default function DashboardPage() {
         </button>
         <button
           type="button"
+          id="inheriting-tab"
           onClick={() => {
             setTab('inheriting');
             setIsMultiSelectMode(false);
@@ -434,7 +451,8 @@ export default function DashboardPage() {
           onKeyDown={(e) => handleTabKeyDown(e, 'inheriting')}
           role="tab"
           aria-selected={tab === 'inheriting'}
-          aria-controls="tab-panel"
+          aria-controls="inheriting-panel"
+          tabIndex={tab === 'inheriting' ? 0 : -1}
           className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
             tab === 'inheriting'
               ? 'bg-will-purple text-white'
@@ -445,6 +463,7 @@ export default function DashboardPage() {
         </button>
         <button
           type="button"
+          id="guardianship-tab"
           onClick={() => {
             setTab('guardianship');
             setIsMultiSelectMode(false);
@@ -453,6 +472,7 @@ export default function DashboardPage() {
           role="tab"
           aria-selected={tab === 'guardianship'}
           aria-controls="guardianship-panel"
+          tabIndex={tab === 'guardianship' ? 0 : -1}
           className={`flex-1 rounded-full px-4 py-2 text-sm font-medium transition ${
             tab === 'guardianship'
               ? 'bg-will-purple text-white'
@@ -602,7 +622,7 @@ export default function DashboardPage() {
       )}
 
       {/* Main Content Pane */}
-      <div id={`${tab}-panel`} role="tabpanel">
+      <div id={`${tab}-panel`} role="tabpanel" aria-labelledby={`${tab}-tab`}>
         {loading ? (
           <div className="space-y-3">
             <CardSkeleton />
