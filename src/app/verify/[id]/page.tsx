@@ -9,6 +9,7 @@
 // is explicitly marketed as a wallet-free source of truth.
 export const dynamic = 'force-dynamic';
 
+import { cache } from 'react';
 import { type Metadata } from 'next';
 import { notFound } from 'next/navigation';
 
@@ -16,9 +17,18 @@ import { formatDeadline, WillStatus } from '@sorowill/sdk';
 import { getContractId, getSoroWillClient, stellarExpertUrl } from '@/lib/sorowill';
 import { isWillNotFoundError } from '@/lib/errors';
 import { nextCheckinDeadline } from '@/lib/deadlines';
+import { formatTokenBalance } from '@/lib/tokenDecimals';
 import { StatusBanner } from '@/components/StatusBanner';
 import { ShareVerification } from '@/components/ShareVerification';
 import { CopyAddress } from '@/components/CopyAddress';
+
+/**
+ * Memoize getWill per request so generateMetadata and the page body
+ * both hit the same cached result instead of making two separate RPC calls.
+ */
+const getWillCached = cache(async (id: string) => {
+  return getSoroWillClient().getWill(id);
+});
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }): Promise<Metadata> {
   let title = 'Verify Will';
@@ -26,9 +36,14 @@ export async function generateMetadata({ params }: { params: Promise<{ id: strin
   const { id } = await params;
 
   try {
-    const will = await getSoroWillClient().getWill(id);
+    const will = await getWillCached(id);
     title = `Verify Will #${will.id}`;
-    description = `Status: ${will.status}. Locked balance: ${(Number(will.balance) / 1_000_000).toFixed(2)} USDC. ${will.beneficiaries.length} beneficiaries.`;
+    // Use formatTokenBalance so the balance reflects the token's real decimal
+    // precision instead of always dividing by 1_000_000 (6 decimals / USDC).
+    // The token symbol is omitted for unknown tokens to avoid mislabelling.
+    const balanceStr = formatTokenBalance(will.balance, will.token ?? '');
+    const tokenLabel = will.token ? '' : '';
+    description = `Status: ${will.status}. Locked balance: ${balanceStr}${tokenLabel}. ${will.beneficiaries.length} beneficiar${will.beneficiaries.length === 1 ? 'y' : 'ies'}.`;
   } catch {
     // Fall back to generic metadata if the will fetch fails.
   }
@@ -40,7 +55,7 @@ export default async function VerifyPage({ params }: { params: Promise<{ id: str
   const { id } = await params;
   let will;
   try {
-    will = await getSoroWillClient().getWill(id);
+    will = await getWillCached(id);
   } catch (error) {
     if (isWillNotFoundError(error)) {
       notFound();
