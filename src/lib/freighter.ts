@@ -60,7 +60,7 @@ export async function safeGetWalletNetwork(): Promise<{
     return null;
   }
   try {
-    // Dynamic import: @stellar/freighter-api is a transitive dep of @sorowill/sdk
+    // Dynamic import: tree-shaken at build time; not needed during SSR
     const { isConnected, getNetwork: getFreighterNetwork } = await import(
       '@stellar/freighter-api'
     );

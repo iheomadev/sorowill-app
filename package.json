@@ -23,6 +23,7 @@
   },
   "dependencies": {
     "@sorowill/sdk": "^0.1.0",
+    "@stellar/freighter-api": "6.0.1",
     "jspdf": "^4.2.1",
     "next": "^16.3.0",
     "next-intl": "^4.13.4",
