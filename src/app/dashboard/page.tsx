@@ -465,7 +465,11 @@ export default function DashboardPage() {
 
       {/* Search & Filter */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <label htmlFor="dashboard-search" className="sr-only">
+          Search wills
+        </label>
         <input
+          id="dashboard-search"
           ref={searchInputRef}
           type="text"
           value={search}
@@ -473,7 +477,11 @@ export default function DashboardPage() {
           placeholder="Search by will ID or beneficiary address"
           className="flex-1 rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-will-light placeholder:text-will-light/40 focus:border-will-purple focus:outline-none"
         />
+        <label htmlFor="dashboard-status-filter" className="sr-only">
+          Filter by status
+        </label>
         <select
+          id="dashboard-status-filter"
           value={statusFilter}
           onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
           className="rounded-lg border border-white/10 bg-white/5 px-3 py-2 text-sm text-will-light focus:border-will-purple focus:outline-none"
@@ -651,6 +659,7 @@ export default function DashboardPage() {
                     type="checkbox"
                     checked={selectedWillIds.includes(will.id)}
                     onChange={() => handleToggleSelectWill(will.id)}
+                    aria-label={`Select will ${will.id} for batch top-up`}
                     className="h-5 w-5 rounded border-white/10 bg-white/5 text-will-purple focus:ring-will-purple accent-will-purple cursor-pointer"
                   />
                 )}
