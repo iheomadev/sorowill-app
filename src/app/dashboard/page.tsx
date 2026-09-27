@@ -222,14 +222,20 @@ export default function DashboardPage() {
   function handleToggleSelectWill(willId: string) {
     setSelectedWillIds((prev) => {
       if (prev.includes(willId)) {
-        const next = prev.filter((id) => id !== willId);
-        const nextAmounts = { ...batchAmounts };
-        delete nextAmounts[willId];
-        setBatchAmounts(nextAmounts);
-        return next;
+        return prev.filter((id) => id !== willId);
       } else {
         return [...prev, willId];
       }
+    });
+    // Side effect lives outside the pure updater so React StrictMode's
+    // double-invocation of the updater above cannot corrupt batchAmounts.
+    setBatchAmounts((prev) => {
+      if (willId in prev) {
+        const next = { ...prev };
+        delete next[willId];
+        return next;
+      }
+      return prev;
     });
   }
 
